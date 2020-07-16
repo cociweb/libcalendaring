@@ -1,12 +1,18 @@
 {
-    "name": "texxasrulez/roundcube_caldav_calendar_libcalendaring",
+    "name": "texxasrulez/libcalendaring",
     "type": "roundcube-plugin",
     "description": "Library providing common functions for calendaring plugins.",
     "homepage": "https://github.com/texxasrulez/roundcube_caldav_calendar_libcalendaring",
     "license": "GPL-3.0-only",
     "version": "1.0",
-    "authors": [
-        {
+    "authors": [        ,
+		{
+            "name": "Gene Hawkins",
+            "email": "texxasrulez@yahoo.com",
+			"homepage": "https://www.genesworld.net",
+            "role": "Developer"
+        },
+		{
             "name": "Thomas Bruederli",
             "email": "bruederli@kolabsys.com",
             "role": "Lead"
@@ -14,11 +20,6 @@
         {
             "name": "Aleksander Machniak",
             "email": "machniak@kolabsys.com",
-            "role": "Developer"
-        },
-		{
-            "name": "Gene Hawkins",
-            "email": "texxasrulez@yahoo.com",
             "role": "Developer"
         }
     ],
