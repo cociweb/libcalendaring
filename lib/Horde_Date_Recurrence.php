@@ -1565,7 +1565,7 @@ class Horde_Date_Recurrence
         // Exceptions.
         if (isset($hash['exclusion'])) {
             foreach ($hash['exclusion'] as $exception) {
-                if ($exception instanceof DateTimeImmutable) {
+                if ($exception instanceof DateTime) {
                     $this->exceptions[] = $exception->format('Ymd');
                 }
             }
@@ -1573,7 +1573,7 @@ class Horde_Date_Recurrence
 
         if (isset($hash['complete'])) {
             foreach ($hash['complete'] as $completion) {
-                if ($exception instanceof DateTimeImmutable) {
+                if ($exception instanceof DateTime) {
                     $this->completions[] = $completion->format('Ymd');
                 }
             }
@@ -1694,10 +1694,10 @@ class Horde_Date_Recurrence
         // Recurrence exceptions
         $hash['exclusion'] = $hash['complete'] = array();
         foreach ($this->exceptions as $exception) {
-            $hash['exclusion'][] = new DateTimeImmutable($exception);
+            $hash['exclusion'][] = new DateTime($exception);
         }
         foreach ($this->completions as $completionexception) {
-            $hash['complete'][] = new DateTimeImmutable($completionexception);
+            $hash['complete'][] = new DateTime($completionexception);
         }
 
         return $hash;

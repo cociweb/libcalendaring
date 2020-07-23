@@ -50,7 +50,7 @@ class libcalendaring_recurrence
      * Initialize recurrence engine
      *
      * @param array  The recurrence properties
-     * @param object DateTimeImmutable The recurrence start date
+     * @param object DateTime The recurrence start date
      */
     public function init($recurrence, $start = null)
     {
@@ -80,7 +80,7 @@ class libcalendaring_recurrence
     /**
      * Setter for (new) recurrence start date
      *
-     * @param object DateTimeImmutable The recurrence start date
+     * @param object DateTime The recurrence start date
      */
     public function set_start($start)
     {
@@ -94,7 +94,7 @@ class libcalendaring_recurrence
     /**
      * Get date/time of the next occurence of this event
      *
-     * @return mixed DateTimeImmutable object or False if recurrence ended
+     * @return mixed DateTime object or False if recurrence ended
      */
     public function next()
     {
@@ -122,19 +122,19 @@ class libcalendaring_recurrence
     /**
      * Get the end date of the occurence of this recurrence cycle
      *
-     * @return DateTimeImmutable|bool End datetime of the last occurence or False if recurrence exceeds limit
+     * @return DateTime|bool End datetime of the last occurence or False if recurrence exceeds limit
      */
     public function end()
     {
         // recurrence end date is given
-        if ($this->recurrence['UNTIL'] instanceof DateTimeImmutable) {
+        if ($this->recurrence['UNTIL'] instanceof DateTime) {
             return $this->recurrence['UNTIL'];
         }
 
         // take the last RDATE entry if set
         if (is_array($this->recurrence['RDATE']) && !empty($this->recurrence['RDATE'])) {
             $last = end($this->recurrence['RDATE']);
-            if ($last instanceof DateTimeImmutable) {
+            if ($last instanceof DateTime) {
               return $last;
             }
         }

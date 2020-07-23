@@ -22,7 +22,7 @@
  *   http://trac.agavi.org/ticket/1008
  *   http://trac.agavi.org/changeset/3659
  *
- * @TODO on switching to PHP::DateTimeImmutable:
+ * @TODO on switching to PHP::DateTime:
  *   The only thing ever stored in the database *IS* Unix timestamps. Doing
  *   anything other than that is unmanageable, yet some frameworks use 'server
  *   based' times in their systems, simply because they do not bother with
@@ -35,7 +35,7 @@
  *   ). So we need a 'display' function that takes a simple numeric epoch, and a
  *   separate timezone id into which the epoch is to be 'converted'. My W3C
  *   mapping works simply because ADOdb then converts that to it's own simple
- *   offset abbreviation - in my case GMT or BST. As long as DateTimeImmutable passes the
+ *   offset abbreviation - in my case GMT or BST. As long as DateTime passes the
  *   full 64 bit number the date range from 100AD is also preserved ( and
  *   further back if 2 digit years are disabled ). If I want to display the
  *   'real' timezone with this 'time' then I just add it in place of ADOdb's
@@ -192,7 +192,7 @@ class Horde_Date
      * - yyyymmdd (might conflict with unix timestamps between 31 Oct 1966 and
      *   03 Mar 1973)
      * - unix timestamps
-     * - anything parsed by strtotime()/DateTimeImmutable.
+     * - anything parsed by strtotime()/DateTime.
      *
      * @throws Horde_Date_Exception
      */
@@ -255,7 +255,7 @@ class Horde_Date
             }
         } else {
             // Use date_create() so we can catch errors with PHP 5.2. Use
-            // "new DateTimeImmutable() once we require 5.3.
+            // "new DateTime() once we require 5.3.
             $parsed = date_create($date);
             if (!$parsed) {
                 throw new Horde_Date_Exception(sprintf(Horde_Date_Translation::t("Failed to parse time string (%s)"), $date));
@@ -286,13 +286,13 @@ class Horde_Date
     }
 
     /**
-     * Returns a DateTimeImmutable object representing this object.
+     * Returns a DateTime object representing this object.
      *
-     * @return DateTimeImmutable
+     * @return DateTime
      */
     public function toDateTime()
     {
-        $date = new DateTimeImmutable(null, new DateTimeZone($this->_timezone));
+        $date = new DateTime(null, new DateTimeZone($this->_timezone));
         $date->setDate($this->_year, $this->_month, $this->_mday);
         $date->setTime($this->_hour, $this->_min, $this->_sec);
         return $date;
@@ -829,7 +829,7 @@ class Horde_Date
         if ($this->_year >= 1970 && $this->_year < 2038) {
             return mktime(0, 0, 0, $this->_month, $this->_mday, $this->_year);
         }
-        $date = new DateTimeImmutable($this->format('Y-m-d'));
+        $date = new DateTime($this->format('Y-m-d'));
         return $date->format('U');
     }
 
@@ -867,12 +867,12 @@ class Horde_Date
             return $this->format('Ymd\THis');
         }
         $dateTime = $this->toDateTime();
-        $dateTime->setTimezone(new \DateTimeZone('UTC'));
+        $dateTime->setTimezone(new DateTimeZone('UTC'));
         return $dateTime->format('Ymd\THis\Z');
     }
 
     /**
-     * Formats time using the specifiers available in date() or in the DateTimeImmutable
+     * Formats time using the specifiers available in date() or in the DateTime
      * class' format() method.
      *
      * To format in languages other than English, use strftime() instead.
@@ -1096,7 +1096,7 @@ class Horde_Date
 
     protected function _initializeFromObject($date)
     {
-        if ($date instanceof DateTimeImmutable) {
+        if ($date instanceof DateTime) {
             $this->_year  = (int)$date->format('Y');
             $this->_month = (int)$date->format('m');
             $this->_mday  = (int)$date->format('d');
@@ -1185,7 +1185,7 @@ class Horde_Date_Utils
     {
         static $cache = array();
         if (!isset($cache[$year][$month])) {
-            $date = new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month));
+            $date = new DateTime(sprintf('%04d-%02d-01', $year, $month));
             $cache[$year][$month] = $date->format('t');
         }
         return $cache[$year][$month];
