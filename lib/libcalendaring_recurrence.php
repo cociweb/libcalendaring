@@ -50,7 +50,7 @@ class libcalendaring_recurrence
      * Initialize recurrence engine
      *
      * @param array  The recurrence properties
-     * @param object DateTime The recurrence start date
+     * @param object DateTimeImmutable The recurrence start date
      */
     public function init($recurrence, $start = null)
     {
@@ -63,14 +63,14 @@ class libcalendaring_recurrence
 
         if (is_array($recurrence['EXDATE'])) {
             foreach ($recurrence['EXDATE'] as $exdate) {
-                if (is_a($exdate, 'DateTime')) {
+                if (is_a($exdate, 'DateTimeImmutable')) {
                     $this->engine->addException($exdate->format('Y'), $exdate->format('n'), $exdate->format('j'));
                 }
             }
         }
         if (is_array($recurrence['RDATE'])) {
             foreach ($recurrence['RDATE'] as $rdate) {
-                if (is_a($rdate, 'DateTime')) {
+                if (is_a($rdate, 'DateTimeImmutable')) {
                     $this->engine->addRDate($rdate->format('Y'), $rdate->format('n'), $rdate->format('j'));
                 }
             }
@@ -80,7 +80,7 @@ class libcalendaring_recurrence
     /**
      * Setter for (new) recurrence start date
      *
-     * @param object DateTime The recurrence start date
+     * @param object DateTimeImmutable The recurrence start date
      */
     public function set_start($start)
     {
@@ -94,7 +94,7 @@ class libcalendaring_recurrence
     /**
      * Get date/time of the next occurence of this event
      *
-     * @return mixed DateTime object or False if recurrence ended
+     * @return mixed DateTimeImmutable object or False if recurrence ended
      */
     public function next()
     {
@@ -122,19 +122,19 @@ class libcalendaring_recurrence
     /**
      * Get the end date of the occurence of this recurrence cycle
      *
-     * @return DateTime|bool End datetime of the last occurence or False if recurrence exceeds limit
+     * @return DateTimeImmutable|bool End datetime of the last occurence or False if recurrence exceeds limit
      */
     public function end()
     {
         // recurrence end date is given
-        if ($this->recurrence['UNTIL'] instanceof DateTime) {
+        if ($this->recurrence['UNTIL'] instanceof DateTimeImmutable) {
             return $this->recurrence['UNTIL'];
         }
 
         // take the last RDATE entry if set
         if (is_array($this->recurrence['RDATE']) && !empty($this->recurrence['RDATE'])) {
             $last = end($this->recurrence['RDATE']);
-            if ($last instanceof DateTime) {
+            if ($last instanceof DateTimeImmutable) {
               return $last;
             }
         }
@@ -217,7 +217,7 @@ class libcalendaring_recurrence
                 'file' => __FILE__,
                 'line' => __LINE__,
                 'message' => sprintf("Failed to find a first occurrence. Start: %s, Recurrence: %s",
-                    $orig_start->format(DateTime::ISO8601), json_encode($r)),
+                    $orig_start->format(DateTimeImmutable::ISO8601), json_encode($r)),
             ), true);
 
             return null;
