@@ -610,7 +610,7 @@ class libvcalendar implements Iterator
             }
             // shift end-date by one day (except Thunderbird)
             else if ($event['allday'] && is_object($event['end'])) {
-                $event['end']->sub(new \DateInterval('PT23H'));
+                $event['end'] = $event['end']->sub(new \DateInterval('PT23H'));
             }
 
             // sanity-check and fix end date
@@ -1044,7 +1044,7 @@ class libvcalendar implements Iterator
         // all-day events end the next day
         if ($event['allday'] && !empty($event['end'])) {
             $event['end'] = clone $event['end'];
-            $event['end']->add(new \DateInterval('P1D'));
+            $event['end'] = $event['end']->add(new \DateInterval('P1D'));
             $event['end']->_dateonly = true;
         }
         if (!empty($event['created']))

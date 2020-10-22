@@ -168,7 +168,7 @@ class libcalendaring_recurrence
                 return $start;
             }
 
-            $start->sub(new DateInterval("P{$interval}W"));
+            $start = $start->sub(new DateInterval("P{$interval}W"));
             break;
 
         case 'MONTHLY':
@@ -176,7 +176,7 @@ class libcalendaring_recurrence
                 return $start;
             }
 
-            $start->sub(new DateInterval("P{$interval}M"));
+            $start = $start->sub(new DateInterval("P{$interval}M"));
             break;
 
         case 'YEARLY':
@@ -184,7 +184,7 @@ class libcalendaring_recurrence
                 return $start;
             }
 
-            $start->sub(new DateInterval("P{$interval}Y"));
+            $start = $start->sub(new DateInterval("P{$interval}Y"));
             break;
 
         default:
