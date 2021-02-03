@@ -30,7 +30,7 @@
         }
     ],
     "require": {
-        "php": "*",
+        "php": ">=7.1.0",
         "roundcube/plugin-installer": "*"
     }
 }
