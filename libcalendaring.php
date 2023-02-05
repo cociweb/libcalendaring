@@ -91,7 +91,7 @@ class libcalendaring extends rcube_plugin
             $this->timezone = new DateTimeZone('GMT');
         }
 
-        $now = new DateTime('now', $this->timezone);
+        $now = new DateTimeImmutable('now', $this->timezone);
 
         $this->gmt_offset      = $now->getOffset();
         $this->dst_active      = $now->format('I');
@@ -184,17 +184,17 @@ class libcalendaring extends rcube_plugin
     /**
      * Shift dates into user's current timezone
      *
-     * @param mixed Any kind of a date representation (DateTime object, string or unix timestamp)
-     * @return object DateTime object in user's timezone
+     * @param mixed Any kind of a date representation (DateTimeImmutable object, string or unix timestamp)
+     * @return object DateTimeImmutable object in user's timezone
      */
     public function adjust_timezone($dt, $dateonly = false)
     {
         if (is_numeric($dt))
-            $dt = new DateTime('@'.$dt);
+            $dt = new DateTimeImmutable('@'.$dt);
         else if (is_string($dt))
             $dt = rcube_utils::anytodatetime($dt);
 
-        if ($dt instanceof DateTime && !($dt->_dateonly || $dateonly)) {
+        if ($dt instanceof DateTimeImmutable && !($dt->_dateonly || $dateonly)) {
             $dt->setTimezone($this->timezone);
         }
 
@@ -307,7 +307,7 @@ class libcalendaring extends rcube_plugin
         }
 
         // abort if no valid event dates are given
-        if (!is_object($event['start']) || !is_a($event['start'], 'DateTime') || !is_object($event['end']) || !is_a($event['end'], 'DateTime')) {
+        if (!is_object($event['start']) || !is_a($event['start'], 'DateTimeImmutable') || !is_object($event['end']) || !is_a($event['end'], 'DateTimeImmutable')) {
             return $fromto;
         }
 
@@ -465,7 +465,7 @@ class libcalendaring extends rcube_plugin
     public static function parse_alarm_value($val)
     {
         if ($val[0] == '@') {
-            return array(new DateTime($val));
+            return array(new DateTimeImmutable($val));
         }
         else if (preg_match('/([+-]?)P?(T?\d+[HMSDW])+/', $val, $m) && preg_match_all('/T?(\d+)([HMSDW])/', $val, $m2, PREG_SET_ORDER)) {
             if ($m[1] == '')
@@ -496,7 +496,7 @@ class libcalendaring extends rcube_plugin
     public static function to_client_alarms($valarms)
     {
         return array_map(function($alarm){
-            if ($alarm['trigger'] instanceof DateTime) {
+            if ($alarm['trigger'] instanceof DateTimeImmutable) {
                 $alarm['trigger'] = '@' . $alarm['trigger']->format('U');
             }
             else if ($trigger = libcalendaring::parse_alarm_value($alarm['trigger'])) {
@@ -514,7 +514,7 @@ class libcalendaring extends rcube_plugin
         return array_map(function($alarm){
             if ($alarm['trigger'][0] == '@') {
                 try {
-                    $alarm['trigger'] = new DateTime($alarm['trigger']);
+                    $alarm['trigger'] = new DateTimeImmutable($alarm['trigger']);
                     $alarm['trigger']->setTimezone(new DateTimeZone('UTC'));
                 }
                 catch (Exception $e) { /* handle this ? */ }
@@ -574,7 +574,7 @@ class libcalendaring extends rcube_plugin
             break;
         }
 
-        if ($trigger instanceof DateTime) {
+        if ($trigger instanceof DateTimeImmutable) {
             $text .= ' ' . $rcube->gettext(array(
                 'name' => 'libcalendaring.alarmat',
                 'vars' => array('datetime' => $rcube->format_date($trigger))
@@ -618,9 +618,9 @@ class libcalendaring extends rcube_plugin
         if ($type == 'task') {
             $timezone = self::get_instance()->timezone;
             if ($rec['startdate'])
-                $rec['start'] = new DateTime($rec['startdate'] . ' ' . ($rec['starttime'] ?: '12:00'), $timezone);
+                $rec['start'] = new DateTimeImmutable($rec['startdate'] . ' ' . ($rec['starttime'] ?: '12:00'), $timezone);
             if ($rec['date'])
-                $rec[($rec['start'] ? 'end' : 'start')] = new DateTime($rec['date'] . ' ' . ($rec['time'] ?: '12:00'), $timezone);
+                $rec[($rec['start'] ? 'end' : 'start')] = new DateTimeImmutable($rec['date'] . ' ' . ($rec['time'] ?: '12:00'), $timezone);
         }
 
         if (!$rec['end'])
@@ -634,7 +634,7 @@ class libcalendaring extends rcube_plugin
             }
         }
 
-        $expires  = new DateTime('now - 12 hours');
+        $expires  = new DateTimeImmutable('now - 12 hours');
         $alarm_id = $rec['id'];  // alarm ID eq. record ID by default to keep backwards compatibility
 
         // handle multiple alarms
@@ -642,14 +642,14 @@ class libcalendaring extends rcube_plugin
         foreach ($rec['valarms'] as $alarm) {
             $notify_time = null;
 
-            if ($alarm['trigger'] instanceof DateTime) {
+            if ($alarm['trigger'] instanceof DateTimeImmutable) {
                 $notify_time = $alarm['trigger'];
             }
             else if (is_string($alarm['trigger'])) {
                 $refdate = $alarm['related'] == 'END' ? $rec['end'] : $rec['start'];
 
                 // abort if no reference date is available to compute notification time
-                if (!is_a($refdate, 'DateTime'))
+                if (!is_a($refdate, 'DateTimeImmutable'))
                     continue;
 
                 // TODO: for all-day events, take start @ 00:00 as reference date ?
@@ -1065,15 +1065,15 @@ class libcalendaring extends rcube_plugin
     public function from_client_recurrence($recurrence, $start = null)
     {
         if (is_array($recurrence) && !empty($recurrence['UNTIL'])) {
-            $recurrence['UNTIL'] = new DateTime($recurrence['UNTIL'], $this->timezone);
+            $recurrence['UNTIL'] = new DateTimeImmutable($recurrence['UNTIL'], $this->timezone);
         }
 
         if (is_array($recurrence) && is_array($recurrence['RDATE'])) {
             $tz = $this->timezone;
             $recurrence['RDATE'] = array_map(function($rdate) use ($tz, $start) {
                 try {
-                    $dt = new DateTime($rdate, $tz);
-                    if (is_a($start, 'DateTime'))
+                    $dt = new DateTimeImmutable($rdate, $tz);
+                    if (is_a($start, 'DateTimeImmutable'))
                         $dt->setTime($start->format('G'), $start->format('i'));
                     return $dt;
                 }
@@ -1505,7 +1505,7 @@ class libcalendaring extends rcube_plugin
             unset($object['_instance'], $object['recurrence_date']);
         }
         // set instance and 'savemode' according to recurrence-id
-        else if (!empty($object['recurrence_date']) && is_a($object['recurrence_date'], 'DateTime')) {
+        else if (!empty($object['recurrence_date']) && is_a($object['recurrence_date'], 'DateTimeImmutable')) {
             $object['_instance'] = self::recurrence_instance_identifier($object);
             $object['_savemode'] = $object['thisandfuture'] ? 'future' : 'current';
         }
@@ -1542,7 +1542,7 @@ class libcalendaring extends rcube_plugin
     {
         $instance_date = $event['recurrence_date'] ?: $event['start'];
 
-        if ($instance_date && is_a($instance_date, 'DateTime')) {
+        if ($instance_date && is_a($instance_date, 'DateTimeImmutable')) {
             // According to RFC5545 (3.8.4.4) RECURRENCE-ID format should
             // be date/date-time depending on the main event type, not the exception
             if ($allday === null) {
@@ -1691,7 +1691,7 @@ class libcalendaring extends rcube_plugin
             switch ($k) {
             case 'UNTIL':
                 // convert to UTC according to RFC 5545
-                if (is_a($val, 'DateTime')) {
+                if (is_a($val, 'DateTimeImmutable')) {
                     if (!$allday && !$val->_dateonly) {
                         $until = clone $val;
                         $until->setTimezone(new DateTimeZone('UTC'));
@@ -1705,7 +1705,7 @@ class libcalendaring extends rcube_plugin
             case 'RDATE':
             case 'EXDATE':
                 foreach ((array)$val as $i => $ex) {
-                    if (is_a($ex, 'DateTime'))
+                    if (is_a($ex, 'DateTimeImmutable'))
                         $val[$i] = $ex->format('Ymd\THis');
                 }
                 $val = join(',', (array)$val);
