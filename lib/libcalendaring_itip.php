@@ -371,7 +371,7 @@ class libcalendaring_itip
         $html   = '';
 
         if (is_numeric($event['changed'])) {
-            $event['changed'] = new DateTime('@'.$event['changed']);
+            $event['changed'] = new DateTimeImmutable('@'.$event['changed']);
         }
 
         // check if the given itip object matches the last state
@@ -460,7 +460,7 @@ class libcalendaring_itip
                             if ($key == 'allday') {
                                 $event[$key] = $event[$key] == 'true';
                             }
-                            $value = $existing[$key] instanceof DateTime ? $existing[$key]->format('c') : $existing[$key];
+                            $value = $existing[$key] instanceof DateTimeImmutable ? $existing[$key]->format('c') : $existing[$key];
                             $num++;
                             $got += intval($value == $event[$key]);
                         }
@@ -674,7 +674,7 @@ class libcalendaring_itip
             // For replies we need more metadata
             foreach (array('start', 'end', 'due', 'allday', 'recurrence', 'location') as $key) {
                 if (isset($event[$key])) {
-                    $metadata[$key] = $event[$key] instanceof DateTime ? $event[$key]->format('c') : $event[$key];
+                    $metadata[$key] = $event[$key] instanceof DateTimeImmutable ? $event[$key]->format('c') : $event[$key];
                 }
             }
         }

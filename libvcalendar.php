@@ -150,6 +150,7 @@ class libvcalendar implements Iterator
             }
 
             $vobject = VObject\Reader::read($vcal, VObject\Reader::OPTION_FORGIVING | VObject\Reader::OPTION_IGNORE_INVALID_LINES);
+
             if ($vobject)
                 return $this->import_from_vobject($vobject);
         }
@@ -609,7 +610,7 @@ class libvcalendar implements Iterator
             }
             // shift end-date by one day (except Thunderbird)
             else if ($event['allday'] && is_object($event['end'])) {
-                $event['end']->sub(new \DateInterval('PT23H'));
+                $event['end'] = $event['end']->sub(new \DateInterval('PT23H'));
             }
 
             // sanity-check and fix end date
@@ -693,14 +694,20 @@ class libvcalendar implements Iterator
         }
 
         // assign current timezone to event start/end
-        if ($event['start'] instanceof DateTime) {
+        if ($event['start'] instanceof DateTimeImmutable) {
+            $this->_apply_timezone($event['start']);
+        }
+        else if ($event['start'] instanceof DateTimeImmutable){
             $this->_apply_timezone($event['start']);
         }
         else {
             unset($event['start']);
         }
 
-        if ($event['end'] instanceof DateTime) {
+        if ($event['end'] instanceof DateTimeImmutable) {
+            $this->_apply_timezone($event['end']);
+        } 
+        else if ($event['end'] instanceof DateTimeImmutable){
             $this->_apply_timezone($event['end']);
         }
         else {
@@ -727,7 +734,7 @@ class libvcalendar implements Iterator
     }
 
     /**
-     * Apply user timezone to DateTime object
+     * Apply user timezone to DateTimeImmutable object
      */
     private function _apply_timezone(&$date)
     {
@@ -737,7 +744,7 @@ class libvcalendar implements Iterator
 
         // For date-only we'll keep the date and time intact
         if ($date->_dateonly) {
-            $dt = new DateTime(null, $this->timezone);
+            $dt = new DateTimeImmutable(null, $this->timezone);
             $dt->setDate($date->format('Y'), $date->format('n'), $date->format('j'));
             $dt->setTime($date->format('G'), $date->format('i'), 0);
             $date = $dt;
@@ -836,10 +843,10 @@ class libvcalendar implements Iterator
             return $as_array ? array() : null;
         }
         else if ($prop instanceof VObject\Property\iCalendar\DateTime) {
-            if (count($prop->getDateTimes()) > 1) {
+            if (count($prop->getDateTime()) > 1) {
                 $dt = array();
                 $dateonly = !$prop->hasTime();
-                foreach ($prop->getDateTimes() as $item) {
+                foreach ($prop->getDateTime() as $item) {
                     $item->_dateonly = $dateonly;
                     $dt[] = $item;
                 }
@@ -874,7 +881,7 @@ class libvcalendar implements Iterator
                 }
             }
         }
-        else if ($prop instanceof \DateTime) {
+        else if ($prop instanceof \DateTimeImmutable) {
             $dt = $prop;
         }
 
@@ -882,17 +889,16 @@ class libvcalendar implements Iterator
         if ($as_array && !is_array($dt)) {
             $dt = empty($dt) ? array() : array($dt);
         }
-
         return $dt;
     }
 
 
     /**
-     * Create a Sabre\VObject\Property instance from a PHP DateTime object
+     * Create a Sabre\VObject\Property instance from a PHP DateTimeImmutable object
      *
      * @param object  VObject\Document parent node to create property for
      * @param string  Property name
-     * @param object  DateTime
+     * @param object  DateTimeImmutable
      * @param boolean Set as UTC date
      * @param boolean Set as VALUE=DATE property
      */
@@ -1032,13 +1038,13 @@ class libvcalendar implements Iterator
         $ve->UID = $event['uid'];
 
         // set DTSTAMP according to RFC 5545, 3.8.7.2.
-        $dtstamp = !empty($event['changed']) && empty($this->method) ? $event['changed'] : new DateTime('now', new \DateTimeZone('UTC'));
+        $dtstamp = !empty($event['changed']) && empty($this->method) ? $event['changed'] : new DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $ve->DTSTAMP = $this->datetime_prop($cal, 'DTSTAMP', $dtstamp, true);
 
         // all-day events end the next day
         if ($event['allday'] && !empty($event['end'])) {
             $event['end'] = clone $event['end'];
-            $event['end']->add(new \DateInterval('P1D'));
+            $event['end'] = $event['end']->add(new \DateInterval('P1D'));
             $event['end']->_dateonly = true;
         }
         if (!empty($event['created']))
@@ -1053,7 +1059,7 @@ class libvcalendar implements Iterator
             $ve->add($this->datetime_prop($cal, 'DUE',   $event['due'], false));
 
         // we're exporting a recurrence instance only
-        if (!$recurrence_id && $event['recurrence_date'] && $event['recurrence_date'] instanceof DateTime) {
+        if (!$recurrence_id && $event['recurrence_date'] && $event['recurrence_date'] instanceof DateTimeImmutable) {
             $recurrence_id = $this->datetime_prop($cal, 'RECURRENCE-ID', $event['recurrence_date'], false, (bool)$event['allday']);
             if ($event['thisandfuture'])
                 $recurrence_id->add('RANGE', 'THISANDFUTURE');
@@ -1091,7 +1097,7 @@ class libvcalendar implements Iterator
             // add EXDATEs each one per line (for Thunderbird Lightning)
             if (is_array($exdates)) {
                 foreach ($exdates as $exdate) {
-                    if ($exdate instanceof DateTime) {
+                    if ($exdate instanceof DateTimeImmutable) {
                         $ve->add($this->datetime_prop($cal, 'EXDATE', $exdate));
                     }
                 }
@@ -1140,14 +1146,14 @@ class libvcalendar implements Iterator
 
         // Apple iCal and BusyCal required the COMPLETED date to be set in order to consider a task complete
         if ($event['status'] == 'COMPLETED' || $event['complete'] == 100) {
-            $ve->add($this->datetime_prop($cal, 'COMPLETED', $event['changed'] ?: new DateTime('now - 1 hour'), true));
+            $ve->add($this->datetime_prop($cal, 'COMPLETED', $event['changed'] ?: new DateTimeImmutable('now - 1 hour'), true));
         }
 
         if ($event['valarms']) {
             foreach ($event['valarms'] as $alarm) {
                 $va = $cal->createComponent('VALARM');
                 $va->action = $alarm['action'];
-                if ($alarm['trigger'] instanceof DateTime) {
+                if ($alarm['trigger'] instanceof DateTimeImmutable) {
                     $va->add($this->datetime_prop($cal, 'TRIGGER', $alarm['trigger'], true, null, true));
                 }
                 else {
@@ -1186,7 +1192,7 @@ class libvcalendar implements Iterator
             $val = libcalendaring::parse_alarm_value($trigger);
             if ($val[3])
                 $va->add('TRIGGER', $val[3]);
-            else if ($val[0] instanceof DateTime)
+            else if ($val[0] instanceof DateTimeImmutable)
                 $va->add($this->datetime_prop($cal, 'TRIGGER', $val[0], true, null, true));
             $ve->add($va);
         }
@@ -1376,7 +1382,7 @@ class libvcalendar implements Iterator
             }
 
             if ($cmp) {
-                $dt = new DateTime($trans['time']);
+                $dt = new DateTimeImmutable($trans['time']);
                 $offset = $trans['offset'] / 3600;
 
                 $cmp->DTSTART = $dt->format('Ymd\THis');
