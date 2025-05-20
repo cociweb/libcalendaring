@@ -839,11 +839,13 @@ class libvcalendar implements Iterator
      */
     public static function convert_datetime($prop, $as_array = false)
     {
+        $dt = null;
         if (empty($prop)) {
-            return $as_array ? array() : null;
+            $dt = null;
         }
         else if ($prop instanceof VObject\Property\iCalendar\DateTime) {
-            if (count($prop->getDateTime()) > 1) {
+            $dateTimes = $prop->getDateTime();
+            if (is_array($dateTimes) && count($dateTimes) > 1) {
                 $dt = array();
                 $dateonly = !$prop->hasTime();
                 foreach ($prop->getDateTime() as $item) {
@@ -852,8 +854,8 @@ class libvcalendar implements Iterator
                 }
             }
             else {
-                $dt = $prop->getDateTime();
-                if (!$prop->hasTime()) {
+                $dt = is_array($dateTimes) ? reset($dateTimes) : $dateTimes;
+                if (!$prop->hasTime() && $dt instanceof \DateTimeImmutable) {
                     $dt->_dateonly = true;
                 }
             }
@@ -886,11 +888,16 @@ class libvcalendar implements Iterator
         }
 
         // force return value to array if requested
-        if ($as_array && !is_array($dt)) {
-            $dt = empty($dt) ? array() : array($dt);
+        if ($as_array) {
+            if (empty($dt)) {
+               $dt = array();
+            } else if (!is_array($dt)) {
+               $dt = array($dt);
+            }
         }
         return $dt;
     }
+
 
 
     /**
