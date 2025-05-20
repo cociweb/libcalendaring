@@ -1039,11 +1039,24 @@ class Horde_Date
      */
     protected function _correctMonth($down = false)
     {
+        static $correction_limit = 1000;
+        static $corrections = 0;
+    
+        $corrections++;
+        if ($corrections > $correction_limit) {
+            throw new Exception("Too many month corrections, possible infinite loop in _correctMonth()");
+        }
+    
         $this->_year += (int)($this->_month / 12);
         $this->_month %= 12;
         if ($this->_month < 1) {
             $this->_year--;
             $this->_month += 12;
+        }
+    
+        // Reset counter if correction seems complete (optional)
+        if ($this->_month >= 1 && $this->_month <= 12) {
+            $corrections = 0;
         }
     }
 
