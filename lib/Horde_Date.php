@@ -1184,6 +1184,13 @@ class Horde_Date_Utils
     public static function daysInMonth($month, $year)
     {
         static $cache = array();
+    
+        // Validate year and month
+        if ($year < 1 || $month < 1 || $month > 12) {
+            // Return null or a sensible default, or throw an exception
+            return null;
+        }
+    
         if (!isset($cache[$year][$month])) {
             $date = new DateTime(sprintf('%04d-%02d-01', $year, $month));
             $cache[$year][$month] = $date->format('t');
