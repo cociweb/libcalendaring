@@ -211,7 +211,8 @@ class Horde_Date_Recurrence
      */
     public function getRecurNthWeekday()
     {
-        return isset($this->recurNthDay) ? $this->recurNthDay : ceil($this->start->mday / 7);
+        // PHP7/8: Avoid division by zero and always return int
+        return isset($this->recurNthDay) ? (int)$this->recurNthDay : (int)ceil($this->start->mday / 7);
     }
 
     /**
@@ -1163,6 +1164,7 @@ class Horde_Date_Recurrence
         $rdata = array();
         $parts = explode(';', $rrule);
         foreach ($parts as $part) {
+            if (strpos($part, '=') === false) continue; // PHP7/8: skip invalid
             list($key, $value) = explode('=', $part, 2);
             $rdata[strtoupper($key)] = $value;
         }

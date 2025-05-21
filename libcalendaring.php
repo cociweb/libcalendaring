@@ -194,8 +194,9 @@ class libcalendaring extends rcube_plugin
         else if (is_string($dt))
             $dt = rcube_utils::anytodatetime($dt);
 
-        if ($dt instanceof DateTimeImmutable && !($dt->_dateonly || $dateonly)) {
-            $dt->setTimezone($this->timezone);
+        // PHP7/8: DateTimeImmutable is immutable, must assign result of setTimezone
+        if ($dt instanceof DateTimeImmutable && !(isset($dt->_dateonly) && $dt->_dateonly) && !$dateonly) {
+            $dt = $dt->setTimezone($this->timezone);
         }
 
         return $dt;
@@ -279,7 +280,9 @@ class libcalendaring extends rcube_plugin
 
         // derive format variants from basic date format
         $format_sets = $this->rc->config->get('calendar_date_format_sets', $this->defaults['calendar_date_format_sets']);
-        if ($format_set = $format_sets[$this->defaults['calendar_date_format']]) {
+        $date_format_key = $this->defaults['calendar_date_format'];
+        if (isset($format_sets[$date_format_key]) && is_array($format_sets[$date_format_key])) {
+            $format_set = $format_sets[$date_format_key];
             $this->defaults['calendar_date_long'] = $format_set[0];
             $this->defaults['calendar_date_short'] = $format_set[1];
             $this->defaults['calendar_date_agenda'] = $format_set[2];
@@ -464,6 +467,7 @@ class libcalendaring extends rcube_plugin
      */
     public static function parse_alarm_value($val)
     {
+        // PHP7/8: Use [] for string offset
         if ($val[0] == '@') {
             return array(new DateTimeImmutable($val));
         }
@@ -512,10 +516,11 @@ class libcalendaring extends rcube_plugin
     public static function from_client_alarms($valarms)
     {
         return array_map(function($alarm){
-            if ($alarm['trigger'][0] == '@') {
+            // PHP7/8: Use [] for string offset
+            if (isset($alarm['trigger'][0]) && $alarm['trigger'][0] == '@') {
                 try {
                     $alarm['trigger'] = new DateTimeImmutable($alarm['trigger']);
-                    $alarm['trigger']->setTimezone(new DateTimeZone('UTC'));
+                    $alarm['trigger'] = $alarm['trigger']->setTimezone(new DateTimeZone('UTC'));
                 }
                 catch (Exception $e) { /* handle this ? */ }
             }
@@ -656,9 +661,10 @@ class libcalendaring extends rcube_plugin
 
                 try {
                     $interval = new DateInterval(trim($alarm['trigger'], '+-'));
-                    $interval->invert = $alarm['trigger'][0] == '-';
+                    // PHP7/8: Use [] for string offset
+                    $interval->invert = isset($alarm['trigger'][0]) && $alarm['trigger'][0] == '-';
                     $notify_time = clone $refdate;
-                    $notify_time->add($interval);
+                    $notify_time = $notify_time->add($interval);
                 }
                 catch (Exception $e) {
                     rcube::raise_error($e, true);
@@ -1637,7 +1643,7 @@ class libcalendaring extends rcube_plugin
                             $new['attendees'][$i] = $_attendee;
                             if ($_attendee['status'] == 'DELEGATED' && ($email = $_attendee['delegated-to'])) {
                                 $delegates[] = strtolower($email);
-                            }
+                                                       }
 
                             break;
                         }

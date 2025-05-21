@@ -85,7 +85,8 @@ class libcalendaring_recurrence
     public function set_start($start)
     {
         $this->start = $start;
-        $this->dateonly = $start->_dateonly;
+        // PHP7/8: Avoid dynamic property creation, check property existence
+        $this->dateonly = isset($start->_dateonly) && $start->_dateonly;
         $this->next = new Horde_Date($start, $this->lib->timezone->getName());
         $this->hour = $this->next->hour;
         $this->engine->setRecurStart($this->next);
@@ -223,11 +224,15 @@ class libcalendaring_recurrence
             return null;
         }
 
-        if ($start Instanceof Horde_Date) {
+        // PHP7/8: Use instanceof (case sensitive)
+        if ($start instanceof Horde_Date) {
             $start = $start->toDateTime();
         }
 
-        $start->_dateonly = $this->dateonly;
+        // PHP7/8: Avoid dynamic property creation
+        if (is_object($start)) {
+            $start->_dateonly = $this->dateonly;
+        }
 
         return $start;
     }

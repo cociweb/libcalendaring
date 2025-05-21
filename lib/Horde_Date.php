@@ -292,9 +292,10 @@ class Horde_Date
      */
     public function toDateTime()
     {
-        $date = new DateTimeImmutable(null, new DateTimeZone($this->_timezone));
-        $date->setDate($this->_year, $this->_month, $this->_mday);
-        $date->setTime($this->_hour, $this->_min, $this->_sec);
+        // PHP7/8: DateTimeImmutable is immutable, so use constructor and setDate/setTime
+        $date = new DateTimeImmutable('now', new DateTimeZone($this->_timezone));
+        $date = $date->setDate($this->_year, $this->_month, $this->_mday);
+        $date = $date->setTime($this->_hour, $this->_min, $this->_sec);
         return $date;
     }
 
@@ -1039,21 +1040,22 @@ class Horde_Date
      */
     protected function _correctMonth($down = false)
     {
+        // PHP7/8: Prevent infinite loop and handle negative/overflow months
         static $correction_limit = 1000;
         static $corrections = 0;
-    
+
         $corrections++;
         if ($corrections > $correction_limit) {
             throw new Exception("Too many month corrections, possible infinite loop in _correctMonth()");
         }
-    
-        $this->_year += (int)($this->_month / 12);
-        $this->_month %= 12;
+
+        $this->_year += (int)floor(($this->_month - 1) / 12);
+        $this->_month = (($this->_month - 1) % 12) + 1;
         if ($this->_month < 1) {
-            $this->_year--;
             $this->_month += 12;
+            $this->_year--;
         }
-    
+
         // Reset counter if correction seems complete (optional)
         if ($this->_month >= 1 && $this->_month <= 12) {
             $corrections = 0;
@@ -1197,13 +1199,13 @@ class Horde_Date_Utils
     public static function daysInMonth($month, $year)
     {
         static $cache = array();
-    
-        // Validate year and month
+
+        // PHP7/8: Validate year and month
         if ($year < 1 || $month < 1 || $month > 12) {
             // Return null or a sensible default, or throw an exception
             return null;
         }
-    
+
         if (!isset($cache[$year][$month])) {
             $date = new DateTime(sprintf('%04d-%02d-01', $year, $month));
             $cache[$year][$month] = $date->format('t');

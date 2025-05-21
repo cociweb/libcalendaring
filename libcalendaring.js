@@ -414,13 +414,13 @@ function rcube_libcalendaring(settings)
         var url1 = '.:;,', url2 = 'a-z0-9%=#@+?&/_~\\[\\]-';
         var link_pattern = new RegExp('([hf]t+ps?://)('+utf_domain+'(['+url1+']?['+url2+']+)*)', 'ig');
         var mailto_pattern = new RegExp('([^\\s\\n\\(\\);]+@'+utf_domain+')', 'ig');
-        var link_replace = function(matches, p1, p2) {
+        var link_replace = function(match, p1, p2) {
           var title = '', text = p2;
           if (p2 && p2.length > 55) {
             text = p2.substr(0, 45) + '...' + p2.substr(-8);
             title = p1 + p2;
           }
-          return '<a href="'+p1+p2+'" class="extlink" target="_blank" title="'+title+'">'+p1+text+'</a>'
+          return '<a href="'+p1+p2+'" class="extlink" target="_blank" title="'+title+'">'+p1+text+'</a>';
         };
 
         return html

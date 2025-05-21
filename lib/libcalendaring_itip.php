@@ -42,15 +42,20 @@ class libcalendaring_itip
 
         $hook = $this->rc->plugins->exec_hook('calendar_load_itip',
             array('identity' => $this->rc->user->list_emails(true)));
-        $this->sender = $hook['identity'];
+        // PHP7/8: Always initialize $this->sender as array
+        $this->sender = is_array($hook['identity']) ? $hook['identity'] : array();
 
         $this->plugin->add_hook('smtp_connect', array($this, 'smtp_connect_hook'));
     }
 
     public function set_sender_email($email)
     {
-        if (!empty($email))
+        if (!empty($email)) {
+            if (!is_array($this->sender)) {
+                $this->sender = array();
+            }
             $this->sender['email'] = $email;
+        }
     }
 
     public function set_rsvp_actions($actions)
@@ -94,8 +99,12 @@ class libcalendaring_itip
      */
     public function send_itip_message($event, $method, $recipient, $subject, $bodytext, $message = null, $rsvp = true)
     {
-        if (!$this->sender['name']) {
-            $this->sender['name'] = $this->sender['email'];
+        // PHP7/8: Always check if $this->sender is array
+        if (!is_array($this->sender)) {
+            $this->sender = array();
+        }
+        if (empty($this->sender['name'])) {
+            $this->sender['name'] = $this->sender['email'] ?? '';
         }
 
         if (!$message) {
@@ -205,9 +214,9 @@ class libcalendaring_itip
      */
     public function compose_itip_message($event, $method, $rsvp = true)
     {
-        $from     = rcube_utils::idn_to_ascii($this->sender['email']);
+        $from     = rcube_utils::idn_to_ascii($this->sender['email'] ?? '');
         $from_utf = rcube_utils::idn_to_utf8($from);
-        $sender   = format_email_recipient($from, $this->sender['name']);
+        $sender   = format_email_recipient($from, $this->sender['name'] ?? '');
 
         // truncate list attendees down to the recipient of the iTip Reply.
         // constraints for a METHOD:REPLY according to RFC 5546
@@ -599,6 +608,7 @@ class libcalendaring_itip
         $buttons = array();
         $dom_id = asciiwords($event['uid'], true);
         $rsvp_status = 'unknown';
+        $import_button = ''; // PHP7/8: always initialize variables
 
         // pass some metadata about the event and trigger the asynchronous status check
         $changed = is_object($event['changed']) ? $event['changed'] : $message_date;
@@ -975,9 +985,10 @@ class libcalendaring_itip
     {
       $ret = false;
 
-      if (is_array($event['x-custom'])) {
+      // PHP7/8: Check array key existence before use
+      if (isset($event['x-custom']) && is_array($event['x-custom'])) {
           array_walk($event['x-custom'], function($prop, $i) use ($name, &$ret) {
-              if (strcasecmp($prop[0], $name) === 0) {
+              if (is_array($prop) && isset($prop[0]) && strcasecmp($prop[0], $name) === 0) {
                   $ret = $prop[1];
               }
           });
