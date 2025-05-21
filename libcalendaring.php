@@ -282,7 +282,7 @@ class libcalendaring extends rcube_plugin
         $format_sets = $this->rc->config->get('calendar_date_format_sets', $this->defaults['calendar_date_format_sets']);
         // Ensure $date_format_key is a string and has a fallback, then check candidate
         $date_format_key = (string) ($this->defaults['calendar_date_format'] ?? 'Y-m-d');
-        $format_set_candidate = $format_sets[$date_format_key] ?? null;
+        $format_set_candidate = isset($format_sets[$date_format_key]) ? $format_sets[$date_format_key] : null;
 
         if (is_array($format_set_candidate) && count($format_set_candidate) >= 3) {
             $this->defaults['calendar_date_long'] = $format_set_candidate[0];

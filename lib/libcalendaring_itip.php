@@ -831,7 +831,7 @@ class libcalendaring_itip
         foreach ($actions as $method) {
             $buttons .= html::tag('input', array(
                 'type'  => $attrib['type'],
-                'name'  => $attrib['iname'] ?? '',
+                'name'  => $attrib['iname'],
                 'class' => 'button',
                 'rel'   => $method,
                 'value' => $this->gettext('itip' . $method),
