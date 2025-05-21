@@ -280,13 +280,16 @@ class libcalendaring extends rcube_plugin
 
         // derive format variants from basic date format
         $format_sets = $this->rc->config->get('calendar_date_format_sets', $this->defaults['calendar_date_format_sets']);
-        $date_format_key = $this->defaults['calendar_date_format'];
-        if (isset($format_sets[$date_format_key]) && is_array($format_sets[$date_format_key])) {
-            $format_set = $format_sets[$date_format_key];
-            $this->defaults['calendar_date_long'] = $format_set[0];
-            $this->defaults['calendar_date_short'] = $format_set[1];
-            $this->defaults['calendar_date_agenda'] = $format_set[2];
+        // Ensure $date_format_key is a string and has a fallback, then check candidate
+        $date_format_key = (string) ($this->defaults['calendar_date_format'] ?? 'Y-m-d');
+        $format_set_candidate = $format_sets[$date_format_key] ?? null;
+
+        if (is_array($format_set_candidate) && count($format_set_candidate) >= 3) {
+            $this->defaults['calendar_date_long'] = $format_set_candidate[0];
+            $this->defaults['calendar_date_short'] = $format_set_candidate[1];
+            $this->defaults['calendar_date_agenda'] = $format_set_candidate[2];
         }
+        // If not found or not a valid array, the specific long/short/agenda defaults won't be overridden here.
     }
 
     /**

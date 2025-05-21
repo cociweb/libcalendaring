@@ -352,7 +352,7 @@ class libvcalendar implements Iterator
                     $object = $this->_to_array($ve);
 
                     // temporarily store this as exception
-                    if (!empty($object['recurrence_date'])) {
+                    if (!empty($object['recurrence_date'] ?? null)) {
                         $exceptions[] = $object;
                     }
                     else if (empty($seen[$object['uid']])) {
@@ -1044,9 +1044,9 @@ class libvcalendar implements Iterator
         $ve->DTSTAMP = $this->datetime_prop($cal, 'DTSTAMP', $dtstamp, true);
 
         // all-day events end the next day
-        if (!empty($event['allday']) && !empty($event['end'])) {
+        if (!empty($event['allday'] ?? null) && !empty($event['end'] ?? null)) {
             $event['end'] = clone $event['end'];
-            $event['end'] = $event['end']->add(new \DateInterval('P1D'));
+            $event['end'] = $event['end']->add(new \DateInterval('P1D')); // This assumes $event['end'] is a DateTimeImmutable object
             $event['end']->_dateonly = true;
         }
         if (!empty($event['created']))
@@ -1078,7 +1078,7 @@ class libvcalendar implements Iterator
         if ($event['description'])
             $ve->add('DESCRIPTION', strtr($event['description'], array("\r\n" => "\n", "\r" => "\n"))); // normalize line endings
 
-        if (isset($event['sequence']))
+        if (isset($event['sequence'] ?? null))
             $ve->add('SEQUENCE', $event['sequence']);
 
         if ($event['recurrence'] && !$recurrence_id) {
@@ -1112,7 +1112,7 @@ class libvcalendar implements Iterator
             }
         }
 
-        if ($event['categories']) {
+        if (!empty($event['categories'] ?? null)) {
             $cat = $cal->create('CATEGORIES');
             $cat->setParts((array)$event['categories']);
             $ve->add($cat);
@@ -1127,7 +1127,7 @@ class libvcalendar implements Iterator
             }
         }
 
-        if ($event['priority'])
+        if (!empty($event['priority'] ?? null))
           $ve->add('PRIORITY', $event['priority']);
 
         if ($event['cancelled'])
@@ -1137,7 +1137,7 @@ class libvcalendar implements Iterator
         else if ($event['complete'] == 100)
             $ve->add('STATUS', 'COMPLETED');
         else if (!empty($event['status']))
-            $ve->add('STATUS', $event['status']);
+            $ve->add('STATUS', strval($event['status']));
 
         if (!empty($event['sensitivity']))
             $ve->add('CLASS', strtoupper($event['sensitivity']));
@@ -1152,7 +1152,7 @@ class libvcalendar implements Iterator
         }
 
         if ($event['valarms']) {
-            foreach ($event['valarms'] as $alarm) {
+            foreach ((array)($event['valarms'] ?? []) as $alarm) {
                 $va = $cal->createComponent('VALARM');
                 $va->action = $alarm['action'];
                 if ($alarm['trigger'] instanceof DateTimeImmutable) {
@@ -1200,13 +1200,13 @@ class libvcalendar implements Iterator
         }
 
         // Find SCHEDULE-AGENT
-        foreach ((array)$event['x-custom'] as $prop) {
+        foreach ((array)($event['x-custom'] ?? []) as $prop) {
             if ($prop[0] === 'SCHEDULE-AGENT') {
                 $schedule_agent = $prop[1];
             }
         }
 
-        foreach ((array)$event['attendees'] as $attendee) {
+        foreach ((array)($event['attendees'] ?? []) as $attendee) {
             if ($attendee['role'] == 'ORGANIZER') {
                 if (empty($event['organizer']))
                     $event['organizer'] = $attendee;
@@ -1226,7 +1226,7 @@ class libvcalendar implements Iterator
             }
         }
 
-        if ($event['organizer']) {
+        if (!empty($event['organizer'] ?? null)) {
             $organizer = array_filter(self::map_keys($event['organizer'], $this->organizer_keymap));
 
             if ($schedule_agent !== null && !isset($organizer['SCHEDULE-AGENT'])) {
@@ -1236,7 +1236,7 @@ class libvcalendar implements Iterator
             $ve->add('ORGANIZER', 'mailto:' . $event['organizer']['email'], $organizer);
         }
 
-        foreach ((array)$event['url'] as $url) {
+        foreach ((array)($event['url'] ?? []) as $url) {
             if (!empty($url)) {
                 $ve->add('URL', $url);
             }
@@ -1246,7 +1246,7 @@ class libvcalendar implements Iterator
             $ve->add('RELATED-TO', $event['parent_id'], array('RELTYPE' => 'PARENT'));
         }
 
-        if ($event['comment'])
+        if (!empty($event['comment'] ?? null))
             $ve->add('COMMENT', $event['comment']);
 
         $memory_limit = parse_bytes(ini_get('memory_limit'));
@@ -1281,12 +1281,12 @@ class libvcalendar implements Iterator
             }
         }
 
-        foreach ((array)$event['links'] as $uri) {
+        foreach ((array)($event['links'] ?? []) as $uri) {
             $ve->add('ATTACH', $uri);
         }
 
         // add custom properties
-        foreach ((array)$event['x-custom'] as $prop) {
+        foreach ((array)($event['x-custom'] ?? []) as $prop) {
             $ve->add($prop[0], $prop[1]);
         }
 
@@ -1299,7 +1299,7 @@ class libvcalendar implements Iterator
         }
 
         // append recurrence exceptions
-        if (is_array($event['recurrence']) && !empty($event['recurrence']['EXCEPTIONS'])) {
+        if (is_array($event['recurrence'] ?? null) && !empty($event['recurrence']['EXCEPTIONS'] ?? null)) {
             foreach ($event['recurrence']['EXCEPTIONS'] as $ex) {
                 $exdate = !empty($ex['recurrence_date']) ? $ex['recurrence_date'] : (isset($ex['start']) ? $ex['start'] : null);
                 if ($exdate) {

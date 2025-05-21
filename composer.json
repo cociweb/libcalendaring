@@ -4,7 +4,7 @@
     "description": "Library providing common functions for calendaring plugins.",
     "homepage": "https://github.com/cociweb/libcalendaring",
     "license": "GPL-3.0-only",
-    "version": "3.6.0",
+    "version": "3.6.0.1",
     "authors": [
 		{
             "name": "Gene Hawkins",
@@ -30,7 +30,7 @@
         }
     ],
     "require": {
-        "php": ">=7.1.0",
+        "php": ">=7.2.0",
         "roundcube/plugin-installer": "*"
     }
 }
